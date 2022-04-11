@@ -9,7 +9,7 @@ BGIncomingTBC = LibStub("AceAddon-3.0"):NewAddon("BGIncomingTBC", "AceConsole-3.
 
 
 function LocationButton_OnClick(self, mouseButton)
-    BGIncomingTBC:Print("Clicked")
+    BGIncomingTBC:Print("Clicked ")
 end
 
 function BGIncomingTBC:OnInitialize()
@@ -22,53 +22,91 @@ function BGIncomingTBC:OnInitialize()
 
     self.frame = CreateFrame('Frame', "BGIncomingTBCFrame", UIParent, BackdropTemplateMixin and "BackdropTemplate")
 
+    local frameInset = 3
+    local frameEdge = 7
+    local buttonSize = 40
+    local buttonGap = 2
     self.frame:SetBackdrop({
                 bgFile = "Interface\\Buttons\\WHITE8x8", tile = true, tileSize = 20,        		
                 -- bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark", tile = true, tileSize = 20,
-                edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 7,
-                insets = { left = 3, right = 3, top = 3, bottom = 3 }
+                edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = frameEdge,
+                insets = { left = frameInset, right = frameInset, top = frameInset, bottom = frameInset }
                 })
     self.frame:SetBackdropColor(0.4,0.4,0.4,0.5)
-    self.frame:SetSize(2*40+18, 2*40+18)  
+    self.frame:SetSize(2*40+18, 6*40+18)  
     self.frame:SetClampedToScreen(true)
 
-    local button = CreateFrame("Button", nil, self.frame, "SecureActionButtonTemplate")
-	button:SetSize(48, 40)
-	button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-	button:SetScript("OnClick", LocationButton_OnClick)
-
-    local name ="GM"
-    local keytext ="GM"
-
-	-- Store the location name on the button:
-	button.location = name
-	button.keytext = keytext
-	
-
-	-- Apply the specified texture:
-	-- button:SetNormalTexture("Interface\\AddOns\\BGCallouts\\Icons\\purple")
-	-- button:SetHighlightTexture("Interface\\AddOns\\BGCallouts\\Icons\\highlight")
-
-	text = button:CreateFontString(nil,"ARTWORK","GameFontNormalLarge")
-	text:SetFont("Fonts\\ARIALN.TTF",24)
-	text:SetJustifyH("CENTER")
-	text:SetPoint("CENTER")
-	text:SetText(keytext)
+    for index, locationDescription in pairs(self.bgm:getAllLocations()) do
+        BGIncomingTBC:Print("Location: " .. locationDescription.locationKey .. " index " .. locationDescription.index .. " bgKey = " .. locationDescription.bgKey )
     
-    button:SetPoint("TOPRIGHT", -49, -10)
-    button:RegisterForDrag("LeftButton")
+        local button = CreateFrame("Button", nil, self.frame, "SecureActionButtonTemplate")
+        button:SetSize(buttonSize, buttonSize)
+
+        button:SetNormalTexture("Interface\\Buttons\\WHITE8x8")
+
+    
+        button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+        
+    
+        -- Store the location name on the button:
+        button.locationKey = locationDescription.locationKey
+        button.bgm = self.bgm
+        
+        -- Apply the specified texture:
+        -- button:SetNormalTexture("Interface\\AddOns\\BGCallouts\\Icons\\purple")
+        -- button:SetHighlightTexture("Interface\\AddOns\\BGCallouts\\Icons\\highlight")
+
+        text = button:CreateFontString(nil,"ARTWORK","GameFontNormalLarge")
+        text:SetFont("Fonts\\ARIALN.TTF",22)
+        text:SetJustifyH("CENTER")
+        text:SetPoint("CENTER")
+        text:SetText(button.locationKey)
+        
+--         button:SetPoint("TOPRIGHT", -49, -10)
+
+        button:SetPoint("TOPLEFT",self.frame,"TOPLEFT", frameEdge+buttonGap, -(buttonSize+buttonGap)*(locationDescription.index-1)-frameEdge-buttonGap) 
+        button:RegisterForDrag("LeftButton")
 
 
-    function button:OnDragStart()
-		return self:GetParent():StartMoving()
-	end	
+        function button:OnDragStart()
+            return self:GetParent():StartMoving()
+        end	
 
-    function button:OnDragStop()
-		return self:GetParent():StopMovingOrSizing()
-	end	
-    button:SetScript('OnDragStop', button.OnDragStop)
-    button:SetScript('OnDragStart', button.OnDragStart)
- 
+        function button:OnDragStop()
+            return self:GetParent():StopMovingOrSizing()
+        end	
+
+        function button:update(model)
+            BGIncomingTBC:Print("Update called for button " .. self.locationKey)
+            if model:locationCurrentlyActive(self.locationKey) then
+                self:Show(true)
+            else
+                self:Hide(true)
+            end
+
+            if model.currentLocationKey == self.locationKey then
+                button:SetNormalTexture("Interface\\Buttons\\GREEN8x8")
+            else
+                button:SetNormalTexture("Interface\\Buttons\\WHITE8x8")
+            end
+
+        end
+
+        function button:onClick(mouseButton)
+            BGIncomingTBC:Print("Clicked " .. self.locationKey)  
+            self.bgm:setCurrentLocationKey(self.locationKey)      
+        end
+
+        self.bgm:observe(button)
+        
+        button:SetScript("OnClick", button.onClick)
+        button:SetScript('OnDragStop', button.OnDragStop)
+        button:SetScript('OnDragStart', button.OnDragStart)
+                
+
+    end
+
+    self.frame:SetScale(0.7)
 
 end
   
@@ -100,6 +138,9 @@ function BGIncomingTBC:OnEnable()
     self:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 	self:RegisterEvent("ZONE_CHANGED")
 
+    self.bgm:setBattleground("ab")
+
+
 
     -- Called when the addon is enabled
 end
@@ -121,7 +162,6 @@ end
 
 
 function BGIncomingTBC:ZONE_CHANGED_NEW_AREA()
-	func(select(2,GetInstanceInfo()))
 	self.bgm:setBattlegroundByZoneId(C_Map.GetBestMapForUnit("player"))
 
 	DEFAULT_CHAT_FRAME:AddMessage("subzone: " .. GetSubZoneText() .." map zone id " .. tostring(C_Map.GetBestMapForUnit("player")))
