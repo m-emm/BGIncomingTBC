@@ -27,8 +27,9 @@ local messages = {
     { messageKey ="2" , isIncoming = true},
     { messageKey ="4" , isIncoming = true},
     { messageKey ="BIG" , isIncoming = true},
-    { messageKey ="SAFE" , isIncoming = false, isSafe = true},
-    { messageKey ="PUSH" , isIncoming = false, isSafe = false, isPush = true }
+    { messageKey ="PUSH" , isIncoming = false, isSafe = false, isPush = true },
+    { messageKey ="SAFE" , isIncoming = false, isSafe = true}
+
 }
 
 local local_location_key_to_chat_text = {
@@ -95,7 +96,7 @@ function BattleGroundModel:setBattleground(bgKey)
     local bg_desc =  self.bf_desc[bgKey]    
     if bg_desc ~= nil then
         self.current_bg = bgKey    
-        print("Changing battleground to " .. bgKey)
+        -- print("Changing battleground to " .. bgKey)
         self:update()
     else
         print("Ignoring unknown bg " .. bgKey)
@@ -114,7 +115,7 @@ function BattleGroundModel:setCurrentLocationKey(locationKey)
     local currentLocation = self:getLocationByKey(locationKey)
     if currentLocation ~= nil then
         if currentLocation.bgKey == self.current_bg then
-            print("Setting current location to " .. locationKey)
+            -- print("Setting current location to " .. locationKey)
             self.currentLocationKey = locationKey
             self:update()
         end
@@ -197,7 +198,7 @@ function BattleGroundModel:sendMessage(messageInfo)
         if messageInfo.isSafe then
             message = self:locationChatText() .." is safe"
         end
-        print("sendMessage: ".. message)
+        BGIncomingTBC:Print("sending: ".. message)
         SendChatMessage(message,"INSTANCE_CHAT")
     end
 end

@@ -8,7 +8,6 @@ local DEFAULT_SETTINGS = {
 
 BGIncomingTBC = LibStub("AceAddon-3.0"):NewAddon("BGIncomingTBC", "AceConsole-3.0","AceEvent-3.0")
 
-
 function LocationButton_OnClick(self, mouseButton)
     BGIncomingTBC:Print("Clicked ")
 end
@@ -27,14 +26,14 @@ function BGIncomingTBC:OnInitialize()
     local frameEdge = 2
     local buttonSize = 40
     local buttonGap = 2
-    local locationButtonFontSize = 22
-    local chatButtonFontSize = 15
+    local locationButtonFontSize = 20
+    local chatButtonFontSize = 14
 
     local topBar = 19
     local numButtons = 6
 
     -- self.frame:SetSize(2*buttonSize+4*buttonGap+frameEdge, (numButtons)*(buttonSize+buttonGap)+buttonGap+2*frameEdge+topBar)
-    self.frame:SetSize((numButtons)*(buttonSize+buttonGap)+buttonGap+2*frameEdge+topBar, 2*buttonSize+4*buttonGap+frameEdge + topBar)
+    self.frame:SetSize((numButtons)*(buttonSize+buttonGap)+buttonGap+2*frameEdge, 2*buttonSize+4*buttonGap+frameEdge + topBar)
 
     self.frame:SetBackdrop({
                 bgFile = "Interface\\Buttons\\WHITE8x8", tile = true, tileSize = 20,        		
@@ -46,7 +45,7 @@ function BGIncomingTBC:OnInitialize()
     self.frame:SetClampedToScreen(true)
 
     for index, locationDescription in pairs(self.bgm:getAllLocations()) do
-        BGIncomingTBC:Print("Location: " .. locationDescription.locationKey .. " index " .. locationDescription.index .. " bgKey = " .. locationDescription.bgKey )
+        -- BGIncomingTBC:Print("Location: " .. locationDescription.locationKey .. " index " .. locationDescription.index .. " bgKey = " .. locationDescription.bgKey )
     
         local button = CreateFrame("Button", nil, self.frame, BackdropTemplateMixin and "BackdropTemplate") -- , "SecureActionButtonTemplate")
   
@@ -264,7 +263,7 @@ function BGIncomingTBC:OnInitialize()
     end
 
 
-    self.frame:SetScale(0.7)
+    self.frame:SetScale(0.6)
 
 end
   
