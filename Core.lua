@@ -145,6 +145,8 @@ function BGIncomingTBC:OnInitialize()
             
         button:SetBackdropColor(0.4,0.4,0.4,0.5)
     
+        button:SetHighlightTexture("Interface\\Buttons\\BLACK8x8")
+
         button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
         
     
@@ -186,6 +188,81 @@ function BGIncomingTBC:OnInitialize()
         button:SetScript('OnDragStart', button.OnDragStart)
 
     end
+
+    local bgButtonFontSize = 10
+    for index, battleground in ipairs({{bgKey="ab",text="AB"}, {bgKey="eots",text="EOTS"}}) do 
+        local button = CreateFrame("Button", nil, self.frame, BackdropTemplateMixin and "BackdropTemplate") -- , "SecureActionButtonTemplate")
+  
+        button:SetSize(buttonSize,topBar-2*buttonGap)
+
+       -- button:SetNormalTexture("Interface\\Buttons\\WHITE8x8")
+
+        button:SetBackdrop({
+            bgFile = "Interface\\Buttons\\WHITE8x8", tile = true, tileSize = 20,        		
+            -- bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark", tile = true, tileSize = 20,
+            edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1,
+            insets = { left = 1, right = 1, top = 1, bottom = 1 }
+            })  
+            
+        button:SetBackdropColor(0.4,0.4,0.4,0.5)
+    
+        button:SetHighlightTexture("Interface\\Buttons\\BLACK8x8")
+
+        button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+        
+    
+        
+        button.bgKey = battleground.bgKey        
+        button.bgm = self.bgm
+        
+
+        text = button:CreateFontString(nil,"ARTWORK","GameFontNormalLarge")
+        text:SetFont("Fonts\\ARIALN.TTF",bgButtonFontSize)
+        text:SetJustifyH("CENTER")
+        text:SetPoint("CENTER")
+        text:SetText(battleground.text)
+        
+        
+
+        --- button:SetPoint("TOPLEFT",self.frame,"TOPLEFT", frameEdge+2*buttonGap+buttonSize, -(buttonSize+buttonGap)*(index-1)- frameEdge - buttonGap - topBar) 
+        button:SetPoint("TOPLEFT",self.frame,"TOPLEFT", (buttonSize+buttonGap)*(index-1)+ frameEdge + buttonGap,  -frameEdge-buttonGap) 
+        button:RegisterForDrag("LeftButton")
+
+
+        function button:OnDragStart()
+            return self:GetParent():StartMoving()
+        end	
+
+        function button:OnDragStop()
+            return self:GetParent():StopMovingOrSizing()
+        end	
+
+        function button:onClick(mouseButton)
+            -- BGIncomingTBC:Print("Clicked " .. self.messageKey)  
+            self.bgm:setBattleground(self.bgKey)      
+        end
+
+        function button:update(model)
+            -- BGIncomingTBC:Print("Update called for button " .. self.locationKey)
+
+            if model.current_bg == self.bgKey then
+                button:SetBackdropColor(0.4,0.9,0.4,1.0)
+            else
+                --button:SetNormalTexture("Interface\\Buttons\\WHITE8x8")
+                button:SetBackdropColor(0.4,0.4,0.4,0.5)
+            end
+
+        end
+
+        self.bgm:observe(button)
+
+        
+        button:SetScript("OnClick", button.onClick)
+        button:SetScript('OnDragStop', button.OnDragStop)
+        button:SetScript('OnDragStart', button.OnDragStart)
+
+    end
+
 
     self.frame:SetScale(0.7)
 
