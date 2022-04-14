@@ -22,6 +22,15 @@ local battlefields = {
 	}
 }
 
+local messages = { 
+    { messageKey ="1" , isIncoming = true},
+    { messageKey ="2" , isIncoming = true},
+    { messageKey ="4" , isIncoming = true},
+    { messageKey ="BIG" , isIncoming = true},
+    { messageKey ="SAFE" , isIncoming = false, isSafe = true},
+    { messageKey ="PUSH" , isIncoming = false, isSafe = false, isPush = true }
+}
+
 local local_location_key_to_chat_text = {
 	["FAR"] = "Farm",
 	["FL"] = "Flag"
@@ -60,6 +69,7 @@ function BattleGroundModel.new ()
         end 
     end
     
+    self.messages = messages
     return self
 end
 
@@ -172,6 +182,25 @@ function BattleGroundModel:getAllLocations()
 end
 
 
+function BattleGroundModel:sendMessage(messageInfo)
+    
+    local message = ""
+    local locationChatText =  self:locationChatText()
+
+    if locationChatText ~= nil then
+        if messageInfo.isIncoming then
+            message = self:locationChatText() .." inc " .. messageInfo.messageKey
+        end
+        if messageInfo.isPush then
+            message = "Push " .. self:locationChatText() .."!"
+        end
+        if messageInfo.isSafe then
+            message = self:locationChatText() .." is safe"
+        end
+        print("sendMessage: ".. message)
+        SendChatMessage(message,"INSTANCE_CHAT")
+    end
+end
 
 
 namespace.BattleGroundModel = BattleGroundModel
