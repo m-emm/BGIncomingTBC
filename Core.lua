@@ -22,8 +22,8 @@ function BGIncomingTBC:OnInitialize()
 
     self.frame = CreateFrame('Frame', "BGIncomingTBCFrame", UIParent, BackdropTemplateMixin and "BackdropTemplate")
 
-    local frameInset = 3
-    local frameEdge = 7
+    local frameInset = 2
+    local frameEdge = 2
     local buttonSize = 40
     local buttonGap = 2
     self.frame:SetBackdrop({
@@ -39,10 +39,20 @@ function BGIncomingTBC:OnInitialize()
     for index, locationDescription in pairs(self.bgm:getAllLocations()) do
         BGIncomingTBC:Print("Location: " .. locationDescription.locationKey .. " index " .. locationDescription.index .. " bgKey = " .. locationDescription.bgKey )
     
-        local button = CreateFrame("Button", nil, self.frame, "SecureActionButtonTemplate")
+        local button = CreateFrame("Button", nil, self.frame, BackdropTemplateMixin and "BackdropTemplate") -- , "SecureActionButtonTemplate")
+  
         button:SetSize(buttonSize, buttonSize)
 
-        button:SetNormalTexture("Interface\\Buttons\\WHITE8x8")
+       -- button:SetNormalTexture("Interface\\Buttons\\WHITE8x8")
+
+        button:SetBackdrop({
+            bgFile = "Interface\\Buttons\\WHITE8x8", tile = true, tileSize = 20,        		
+            -- bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark", tile = true, tileSize = 20,
+            edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1,
+            insets = { left = 1, right = 1, top = 1, bottom = 1 }
+            })  
+            
+        button:SetBackdropColor(0.4,0.4,0.4,0.5)
 
     
         button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
@@ -85,9 +95,11 @@ function BGIncomingTBC:OnInitialize()
             end
 
             if model.currentLocationKey == self.locationKey then
-                button:SetNormalTexture("Interface\\Buttons\\GREEN8x8")
+               -- button:SetNormalTexture("Interface\\Buttons\\GREEN8x8")
+                button:SetBackdropColor(0.4,0.9,0.4,1.0)
             else
-                button:SetNormalTexture("Interface\\Buttons\\WHITE8x8")
+                --button:SetNormalTexture("Interface\\Buttons\\WHITE8x8")
+                button:SetBackdropColor(0.4,0.4,0.4,0.5)
             end
 
         end
