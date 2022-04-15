@@ -6,4 +6,5 @@
 ## Notes: Battleground Incoming Calls Helper.
 
 BattleGroundModel.lua
+Gui.lua
 Core.lua
