@@ -1,7 +1,7 @@
 local _, namespace = ...
 
 local DEFAULT_SETTINGS = {
-    char = {frameXPos = 0, frameYPos = 0, framePoint = "CENTER", frameRelativePoint = "CENTER"}
+    char = {frameXPos = 0, frameYPos = 0, framePoint = "CENTER", frameRelativePoint = "CENTER", scaleLevel = 2}
 }
 
 BGIncomingTBC = LibStub("AceAddon-3.0"):NewAddon("BGIncomingTBC", "AceConsole-3.0", "AceEvent-3.0")
@@ -69,7 +69,7 @@ function BGIncomingTBC:OnInitialize()
     local topBar = 19
     local numButtons = 6
 
-    self.bgm = namespace.BattleGroundModel:new()
+    self.bgm = namespace.BattleGroundModel:new(self.db)
 
     self.layouter = namespace.BGLayouter:new()
 
@@ -217,7 +217,18 @@ function BGIncomingTBC:OnInitialize()
 
     button:SetScript("OnClick", button.onClick)
 
-    self.frame:SetScale(0.6)
+    local button = namespace.BGIncomingButton.new(self.frame, "+/-", self.layouter.geometry.bgButtonFontSize)
+    self.layouter:placeButton(button, 0, 4)
+
+    function button:onClick(mouseButton)
+        self.bgm:cycleScale()
+    end
+
+    button.bgm = self.bgm
+
+    button:SetScript("OnClick", button.onClick)
+    self.frame.bgiScale = self.bgm:getScale()
+    self.frame:SetScale(self.frame.bgiScale)
 
     function self.frame:update(model)
         if model.active then
@@ -225,6 +236,16 @@ function BGIncomingTBC:OnInitialize()
         else
             self:Hide(true)
         end
+        local p, z, r, x, y = self:GetPoint()
+        x = x * self.bgiScale
+        y = y * self.bgiScale
+        local newScale = model:getScale()
+        x = x / newScale
+        y = y / newScale
+        self:SetScale(newScale)
+
+        self:SetPoint(p, z, r, x, y)
+        self.bgiScale = newScale
     end
 
     self.bgm:observe(self.frame)
@@ -246,20 +267,23 @@ function BGIncomingTBC:OnEnable()
 
     self.frame:SetScript("OnDragStop", self.frame.StopMovingOrSizingOverride)
     self.frame.that = self
+    self:PlaceFrame()
 
     self.frame:Show(true)
 
+    self:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+    self:RegisterEvent("ZONE_CHANGED")
+
+    self.bgm:setBattleground("ab")
+end
+
+function BGIncomingTBC:PlaceFrame()
     local z = "UIParent"
 
     local p, r = self.db.char.framePoint, self.db.char.frameRelativePoint
     local x, y = self.db.char.frameXPos, self.db.char.frameYPos
 
     self.frame:SetPoint(p, z, r, x, y)
-
-    self:RegisterEvent("ZONE_CHANGED_NEW_AREA")
-    self:RegisterEvent("ZONE_CHANGED")
-
-    self.bgm:setBattleground("ab")
 end
 
 function BGIncomingTBC:EndDrag()
@@ -268,7 +292,6 @@ function BGIncomingTBC:EndDrag()
     self.db.char.frameRelativePoint = relativePoint
     self.db.char.frameXPos = xOfs
     self.db.char.frameYPos = yOfs
-
     self.frame:StopMovingOrSizing()
 end
 

@@ -49,15 +49,16 @@ setmetatable(
     }
 )
 
-function BattleGroundModel.new()
+function BattleGroundModel.new(o, db)
     local self = setmetatable({}, BattleGroundModel)
+    self.db = db
     self.active = false
     self.observers = {}
     self.map_id_to_bg = {}
     self.name_to_location_key = {}
     self.allLocations = {}
     self.allLocationsByKey = {}
-    self.bf_desc = battlefields
+    self.bf_desc = battlefieldss
     for bgKey, bg_desc in pairs(self.bf_desc) do
         self.map_id_to_bg[bg_desc.mapid] = bgKey
 
@@ -137,13 +138,12 @@ function BattleGroundModel:setCurrentLocationName(locationName)
     end
 end
 
-function BattleGroundModel:setRaidWarning(raidWarning)    
+function BattleGroundModel:setRaidWarning(raidWarning)
     if raidWarning ~= self.raidWarning then
         self.raidWarning = raidWarning
         self:update()
     end
 end
-
 
 function BattleGroundModel:locationChatText()
     if self.currentLocationKey ~= nil then
@@ -207,18 +207,17 @@ function BattleGroundModel:sendMessage(messageInfo)
             message = self:locationChatText() .. " inc " .. messageInfo.messageKey
         end
         if messageInfo.isPush then
-            message = "Push " .. self:locationChatText() .. "!"
+            message = "Let's push " .. self:locationChatText() .. "!"
         end
         if messageInfo.isSafe then
             message = self:locationChatText() .. " is safe"
         end
-        local chatChannel = "INSTANCE_CHAT"    
+        local chatChannel = "INSTANCE_CHAT"
         if self.raidWarning then
             chatChannel = "RAID_WARNING"
         end
         BGIncomingTBC:Print("sending: '" .. message .. "' to " .. chatChannel)
         SendChatMessage(message, chatChannel)
-        
     end
 end
 
@@ -227,5 +226,14 @@ function BattleGroundModel:setActive(active)
         self.active = active
         self:update()
     end
+end
 
+function BattleGroundModel:getScale()
+    local scale = 0.7 + 0.3 * (self.db.char.scaleLevel - 1) / 3
+    return scale
+end
+
+function BattleGroundModel:cycleScale()
+    self.db.char.scaleLevel = (self.db.char.scaleLevel + 1) % 4
+    self:update()
 end
