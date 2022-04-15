@@ -6,24 +6,58 @@ local DEFAULT_SETTINGS = {
 
 BGIncomingTBC = LibStub("AceAddon-3.0"):NewAddon("BGIncomingTBC", "AceConsole-3.0", "AceEvent-3.0")
 
+local function split(inputstr, sep)
+    if sep == nil then
+        sep = " "
+    end
+    local t = {}
+    for str in string.gmatch(inputstr, "([^" .. sep .. "]+)") do
+        table.insert(t, str)
+    end
+    return t
+end
 
-
-local function setActive(self,active)
+local function setActive(self, active)
     if active then
         self:SetBackdropColor(0.7, 0.9, 0.4, 1.0)
     else
         self:SetBackdropColor(0.4, 0.4, 0.4, 0.5)
-    end    
+    end
+end
+
+function BGIncomingTBC:PrintHelp(unknownCommand)
+    local message = ""
+    if unknownCommand ~= nil then
+        message = "Unknown command '" .. command .. "' - "
+    end
+    message = message .. "Help for /bginc"
+    BGIncomingTBC:Print(message)
+    BGIncomingTBC:Print("'/bginc show' : show the GUI")
+end
+
+function BGIncomingTBC:Slash(input)
+    -- BGIncomingTBC:Print("Slash: " .. input)
+    local args = split(input, " ")
+    local validCommand = false
+    if #args > 0 then
+        local command = args[1]
+        -- BGIncomingTBC:Print("Command = " .. command)
+        if command == "show" then
+            self.bgm:setActive(true)
+        else
+            self:PrintHelp(command)
+        end
+    else
+        self:PrintHelp()
+    end
 end
 
 function BGIncomingTBC:OnInitialize()
     BGIncomingTBC:Print("BGIncomingTBC Initialize")
 
+    BGIncomingTBC:RegisterChatCommand("bginc", "Slash")
+
     self.db = LibStub("AceDB-3.0"):New("BGIncomingTBCDB", DEFAULT_SETTINGS)
-
-    BGIncomingTBC:Print("frame pos at load: " .. self.db.char.frameXPos ..  " , " .. self.db.char.frameXPos)
-
-    -- self.frame = CreateFrame("Frame",nil,UIParent)
 
     local frameInset = 2
     local frameEdge = 2
@@ -34,7 +68,6 @@ function BGIncomingTBC:OnInitialize()
 
     local topBar = 19
     local numButtons = 6
-
 
     self.bgm = namespace.BattleGroundModel:new()
 
@@ -61,10 +94,14 @@ function BGIncomingTBC:OnInitialize()
     for index, locationDescription in pairs(self.bgm:getAllLocations()) do
         -- BGIncomingTBC:Print("Location: " .. locationDescription.locationKey .. " index " .. locationDescription.index .. " bgKey = " .. locationDescription.bgKey )
 
+        local button =
+            namespace.BGIncomingButton.new(
+            self.frame,
+            locationDescription.locationKey,
+            self.layouter.geometry.locationButtonFontSize
+        )
 
-        local button = namespace.BGIncomingButton.new(self.frame,locationDescription.locationKey,self.layouter.geometry.locationButtonFontSize)
-
-        self.layouter:placeButton(button,2,locationDescription.index)
+        self.layouter:placeButton(button, 2, locationDescription.index)
 
         -- Store the location name on the button:
         button.locationKey = locationDescription.locationKey
@@ -78,7 +115,8 @@ function BGIncomingTBC:OnInitialize()
                 self:Hide(true)
             end
 
-            self:setActive(model.currentLocationKey == self.locationKey)            
+            self:setActive(model.currentLocationKey == self.locationKey)
+            self:setRaidWarning(model.raidWarning)
         end
 
         function button:onClick(mouseButton)
@@ -92,20 +130,17 @@ function BGIncomingTBC:OnInitialize()
     end
 
     for index, message in ipairs(self.bgm.messages) do
+        local button =
+            namespace.BGIncomingButton.new(self.frame, message.messageKey, self.layouter.geometry.chatButtonFontSize)
 
-        local button = namespace.BGIncomingButton.new(self.frame,message.messageKey,self.layouter.geometry.chatButtonFontSize)
+        self.layouter:placeButton(button, 1, index)
 
-
-        self.layouter:placeButton(button,1,index)
-        
         button:setActive(false)
 
-        
         -- Store the location name on the button:
         button.messageKey = message.messageKey
         button.messageInfo = message
         button.bgm = self.bgm
-
 
         function button:onClick(mouseButton)
             -- BGIncomingTBC:Print("Clicked " .. self.messageKey)
@@ -116,15 +151,19 @@ function BGIncomingTBC:OnInitialize()
 
         button:SetScript("OnClick", button.onClick)
 
+        function button:update(model)
+            self:setRaidWarning(model.raidWarning)
+        end
+
+        self.bgm:observe(button)
     end
 
     local bgButtonFontSize = 10
     for index, battleground in ipairs({{bgKey = "ab", text = "AB"}, {bgKey = "eots", text = "EOTS"}}) do
+        local button =
+            namespace.BGIncomingButton.new(self.frame, battleground.text, self.layouter.geometry.bgButtonFontSize)
+        self.layouter:placeButton(button, 0, index)
 
-        local button = namespace.BGIncomingButton.new(self.frame,battleground.text,self.layouter.geometry.bgButtonFontSize)
-        self.layouter:placeButton(button,0,index)
-
-        
         button.bgKey = battleground.bgKey
         button.bgm = self.bgm
 
@@ -137,7 +176,7 @@ function BGIncomingTBC:OnInitialize()
             -- BGIncomingTBC:Print("Update called for button " .. self.locationKey)
 
             self:setActive(model.current_bg == self.bgKey)
-
+            self:setRaidWarning(model.raidWarning)
         end
 
         self.bgm:observe(button)
@@ -145,13 +184,8 @@ function BGIncomingTBC:OnInitialize()
         button:SetScript("OnClick", button.onClick)
     end
 
-
-    local button = namespace.BGIncomingButton.new(self.frame,"RW",self.layouter.geometry.bgButtonFontSize)
-
-
-
-    self.layouter:placeButton(button,0,6)
-    
+    local button = namespace.BGIncomingButton.new(self.frame, "RW", self.layouter.geometry.bgButtonFontSize)
+    self.layouter:placeButton(button, 0, 5)
 
     function button:onClick(mouseButton)
         -- BGIncomingTBC:Print("Clicked " .. self.messageKey)
@@ -159,20 +193,43 @@ function BGIncomingTBC:OnInitialize()
             self.bgm:setRaidWarning(false)
         else
             self.bgm:setRaidWarning(true)
-        end    
+        end
     end
 
     function button:update(model)
         self:setActive(model.raidWarning)
+        self:setRaidWarning(model.raidWarning)
     end
 
     button.bgm = self.bgm
     self.bgm:observe(button)
+    button:SetScript("OnClick", button.onClick)
+
+    local button = namespace.BGIncomingButton.new(self.frame, "X", self.layouter.geometry.bgButtonFontSize)
+    self.layouter:placeButton(button, 0, 6)
+
+    function button:onClick(mouseButton)
+        self.bgm:setActive(false)
+        BGIncomingTBC:Print("GUI hidden - use '/bginc show' to show the GUI")
+    end
+
+    button.bgm = self.bgm
 
     button:SetScript("OnClick", button.onClick)
 
-
     self.frame:SetScale(0.6)
+
+    function self.frame:update(model)
+        if model.active then
+            self:Show(true)
+        else
+            self:Hide(true)
+        end
+    end
+
+    self.bgm:observe(self.frame)
+
+    BGIncomingTBC:Print("Use '/bginc show' to show the GUI")
 end
 
 function BGIncomingTBC:OnEnable()
@@ -203,7 +260,6 @@ function BGIncomingTBC:OnEnable()
     self:RegisterEvent("ZONE_CHANGED")
 
     self.bgm:setBattleground("ab")
-
 end
 
 function BGIncomingTBC:EndDrag()
@@ -222,6 +278,11 @@ end
 
 function BGIncomingTBC:ZONE_CHANGED_NEW_AREA()
     self.bgm:setBattlegroundByZoneId(C_Map.GetBestMapForUnit("player"))
+
+    local instanceInfo = select(2, GetInstanceInfo())
+    if instanceInfo == "pvp" then
+        self.bgm:setActive(true)
+    end
 
     -- DEFAULT_CHAT_FRAME:AddMessage("subzone: " .. GetSubZoneText() .." map zone id " .. tostring(C_Map.GetBestMapForUnit("player")))
 end

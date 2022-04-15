@@ -51,6 +51,7 @@ setmetatable(
 
 function BattleGroundModel.new()
     local self = setmetatable({}, BattleGroundModel)
+    self.active = false
     self.observers = {}
     self.map_id_to_bg = {}
     self.name_to_location_key = {}
@@ -219,4 +220,12 @@ function BattleGroundModel:sendMessage(messageInfo)
         SendChatMessage(message, chatChannel)
         
     end
+end
+
+function BattleGroundModel:setActive(active)
+    if self.active ~= active then
+        self.active = active
+        self:update()
+    end
+
 end

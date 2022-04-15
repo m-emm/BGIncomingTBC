@@ -15,7 +15,7 @@ setmetatable(
 
 function BGLayouter.new()
     local self = setmetatable({}, BGLayouter)
-    self.geometry =  {
+    self.geometry = {
         frameInset = 2,
         frameEdge = 2,
         buttonSize = 40,
@@ -26,40 +26,41 @@ function BGLayouter.new()
         topBar = 19,
         numButtons = 6
     }
-    
+
     return self
 end
 
-function BGLayouter:placeButton(button,row,col)
+function BGLayouter:placeButton(button, row, col)
     -- note: row 0 is the menu bar on top
     local ySize = self.geometry.buttonSize
     if row == 0 then
         ySize = self.geometry.topBar - 2 * self.geometry.buttonGap
     end
-    BGIncomingTBC:Print("placing button, size: " .. self.geometry.buttonSize .. " , " ..ySize )
-    button:SetSize(self.geometry.buttonSize,ySize)
-    local yPos =  -self.geometry.frameEdge - (row-1) * self.geometry.buttonGap - self.geometry.topBar - (row-1)*self.geometry.buttonSize
+
+    button:SetSize(self.geometry.buttonSize, ySize)
+    local yPos =
+        -self.geometry.frameEdge - (row - 1) * self.geometry.buttonGap - self.geometry.topBar -
+        (row - 1) * self.geometry.buttonSize
     if row == 0 then
-        yPos = -self.geometry.buttonGap -  self.geometry.frameEdge
+        yPos = -self.geometry.buttonGap - self.geometry.frameEdge
     end
     button:SetPoint(
         "TOPLEFT",
         button:GetParent(),
         "TOPLEFT",
-        (self.geometry.buttonSize + self.geometry.buttonGap) * (col - 1) + self.geometry.frameEdge + self.geometry.buttonGap,
+        (self.geometry.buttonSize + self.geometry.buttonGap) * (col - 1) + self.geometry.frameEdge +
+            self.geometry.buttonGap,
         yPos
     )
-    
 end
 
 function BGLayouter:placeFrame(frame)
     frame:SetSize(
-        (self.geometry.numButtons) * (self.geometry.buttonSize + self.geometry.buttonGap) + self.geometry.buttonGap + 2 * self.geometry.frameEdge,
+        (self.geometry.numButtons) * (self.geometry.buttonSize + self.geometry.buttonGap) + self.geometry.buttonGap +
+            2 * self.geometry.frameEdge,
         2 * self.geometry.buttonSize + 4 * self.geometry.buttonGap + self.geometry.frameEdge + self.geometry.topBar
     )
 end
-
-
 
 local BGIncomingButton = {}
 namespace.BGIncomingButton = BGIncomingButton
@@ -74,13 +75,15 @@ setmetatable(
     }
 )
 
-function BGIncomingButton.new(frame,text,fontSize)
-    local o =  CreateFrame("Button", nil, frame, BackdropTemplateMixin and "BackdropTemplate")
-    setmetatable(BGIncomingButton,getmetatable(o))
+function BGIncomingButton.new(frame, text, fontSize)
+    local o = CreateFrame("Button", nil, frame, BackdropTemplateMixin and "BackdropTemplate")
+    setmetatable(BGIncomingButton, getmetatable(o))
     local self = setmetatable(o, BGIncomingButton)
     self.__index = self
     self.text = text
+    self.activeColors = {bg = {r = 1.0, g = 0.5, b = 0.1}, rw = {r = 1.0, g = 0, b = 0.0}}
 
+    self.activeColor = self.activeColors.bg
 
     self:SetBackdrop(
         {
@@ -94,18 +97,18 @@ function BGIncomingButton.new(frame,text,fontSize)
         }
     )
 
-    self:SetBackdropColor(0.4, 0.4, 0.4, 0.5)
-
     self:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 
     self:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square")
+    self:SetPushedTexture("Interface\\Buttons\\UI-Quickslot-Depress")
 
     textObject = self:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
     textObject:SetFont("Fonts\\ARIALN.TTF", fontSize)
     textObject:SetJustifyH("CENTER")
     textObject:SetPoint("CENTER")
     textObject:SetText(text)
-
+    self.textObject = textObject
+    self:setActive(false)
 
     self:RegisterForDrag("LeftButton")
 
@@ -114,7 +117,6 @@ function BGIncomingButton.new(frame,text,fontSize)
 
     return self
 end
-
 
 function BGIncomingButton:OnDragStart()
     return self:GetParent():StartMoving()
@@ -125,9 +127,23 @@ function BGIncomingButton:OnDragStop()
 end
 
 function BGIncomingButton:setActive(active)
+    self.active = active
     if active then
-        self:SetBackdropColor(0.9, 0.2, 0.2, 1.0)
+        self:SetBackdropColor(self.activeColor.r, self.activeColor.g, self.activeColor.b, 1.0)
+        self.textObject:SetTextColor(0.3, 0.3, 0.3, 1.0)
     else
         self:SetBackdropColor(0.4, 0.4, 0.4, 0.5)
-    end    
+        self.textObject:SetTextColor(1.0, 1.0, 0.0, 1.0)
+    end
+end
+
+function BGIncomingButton:setRaidWarning(raidWarning)
+    if raidWarning then
+        self.activeColor = self.activeColors.rw
+    else
+        self.activeColor = self.activeColors.bg
+    end
+    if self.active then
+        self:SetBackdropColor(self.activeColor.r, self.activeColor.g, self.activeColor.b, 1.0)
+    end
 end
