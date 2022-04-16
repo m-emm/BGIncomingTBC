@@ -58,7 +58,7 @@ function BattleGroundModel.new(o, db)
     self.name_to_location_key = {}
     self.allLocations = {}
     self.allLocationsByKey = {}
-    self.bf_desc = battlefieldss
+    self.bf_desc = battlefields
     for bgKey, bg_desc in pairs(self.bf_desc) do
         self.map_id_to_bg[bg_desc.mapid] = bgKey
 
