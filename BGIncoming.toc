@@ -1,0 +1,10 @@
+## Interface: 20502
+## Title: BGIncomingTBC
+## Version: 0.9
+## Author: Megeas
+## SavedVariablesPerCharacter: BGIncomingTBCDB
+## Notes: Battleground Incoming Calls Helper.
+
+BattleGroundModel.lua
+Gui.lua
+Core.lua
